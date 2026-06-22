@@ -1,0 +1,31 @@
+# Dependency directories
+**/node_modules/
+node_modules/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+frontend/.env
+frontend/.env.local
+backend/.env
+backend/.env.local
+
+# Build/Compile outputs
+frontend/.next/
+frontend/out/
+backend/dist/
+
+# OS/System files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Large temporary/test files or coverage
+**/coverage/
+**/dist/
+*.tsbuildinfo
+frontend/next-env.d.ts

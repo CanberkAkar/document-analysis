@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant Client as Frontend (Next.js)
+    participant Middleware as LoggerMiddleware
+    participant Auth as JwtAuthGuard
+    participant Controller as RagController
+    participant Cache as CacheManager
+    participant Service as RagService
+    participant LLM as OpenAI / LangChain
+    participant DB as PostgreSQL (TypeORM)
+    participant VectorDB as Qdrant DB
+
+    %% İstek Başlangıcı
+    Client->>Middleware: HTTP POST /rag/ask (Token ile)
+    Middleware-->>Middleware: İsteği Logla (IP, Metod, vs.)
+    Middleware->>Auth: İsteği İlet
+    
+    %% Kimlik Doğrulama
+    Auth-->>Auth: JWT Token Doğrula (JwtStrategy)
+    alt Token Geçersiz
+        Auth-->>Client: 401 Unauthorized
+    else Token Geçerli
+        Auth->>Controller: İsteği Kabul Et
+    end
+
+    %% Cache Kontrolü
+    Controller->>Cache: Bu soru daha önce soruldu mu? (Check Cache)
+    alt Cache'te Var
+        Cache-->>Controller: Önbellekteki Cevap (Hit)
+        Controller-->>Client: 200 OK (Hızlı Yanıt)
+    else Cache'te Yok
+        Controller->>Service: askQuestion(question)
+        
+        %% RAG - Retrieval (Geri Getirme)
+        Service->>VectorDB: Hybrid/MMR Search ile Vektörleri Ara
+        VectorDB-->>Service: En Alakalı 4 Doküman (Retrieved Docs)
+        
+        %% LLM - Generation (Üretim)
+        Service->>LLM: Prompt + Bağlam (Dokümanlar) + Soru
+        LLM-->>Service: Hukuki Cevap ve Atıflar
+        
+        %% Yanıt Döndürme
+        Service->>Cache: Cevabı Kaydet (Set Cache)
+        Service-->>Controller: Nihai Cevap
+        Controller-->>Client: 200 OK (Cevap + Atıflar)
+    end

@@ -1,0 +1,41 @@
+graph TD
+    subgraph Frontend
+        Next[Next.js App UI]
+    end
+
+    subgraph NestJS Backend Core
+        AppModule[AppModule]
+        Logger[Pino Logger Middleware]
+        Cache[Cache-Manager \n Redis/Memory]
+        AuthMod[AuthModule \n JWT Strategy & Guard]
+        AppModule --> Logger
+        AppModule --> Cache
+        AppModule --> AuthMod
+    end
+
+    subgraph RAG Module
+        RagCtrl[RagController \n /upload, /ask]
+        RagSvc[RagService \n LangChain.js Core]
+        RagCtrl -->|Uses| RagSvc
+    end
+
+    subgraph Data Layer
+        TypeORM[TypeORM Repository] --> PG[(PostgreSQL)]
+        QdrantStore[Qdrant Vector Store] --> QDB[(Qdrant DB)]
+    end
+
+    subgraph External AI APIs
+        OpenAI[OpenAI / Claude API]
+    end
+
+    %% Bağlantılar
+    Next -->|REST API| Logger
+    Logger --> AuthMod
+    AuthMod --> RagCtrl
+    
+    AppModule --> RagCtrl
+    AppModule --> TypeORM
+    
+    RagSvc -->|Embeddings & LLM| OpenAI
+    RagSvc -->|Read/Write Vectors| QdrantStore
+    AuthMod -->|Kullanıcı Yetki Doğrulaması| TypeORM
